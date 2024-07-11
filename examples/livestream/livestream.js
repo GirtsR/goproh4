@@ -1,22 +1,46 @@
-var GoPro = require('../../lib/index.js');
+const GoPro = require('../../lib/index.js');
 
-var cam = new GoPro.Camera();
+const cam = new GoPro.Camera();
 
-var express =       require('express');
+const express = require('express');
+const childProcess = require('child_process');
+
+const start_ngrok = function () {
+    if (typeof process.env.NGROK_AUTHTOKEN === "undefined") {
+        throw new Error("NGROK_AUTHTOKEN env var is not defined");
+    }
+    console.log("Launching ngrok tunnels..");
+    const ngrok = childProcess.spawn("ngrok", [
+        "start", "--all", "--config", "ngrok.yml", "--authtoken", process.env.NGROK_AUTHTOKEN
+    ]);
+    ngrok.on("error", function (error) {
+        process.exit(-1);
+    });
+    ngrok.on("exit", function (code) {
+        if (code !== 0) {
+            console.log(`ngrok exited with non-zero exit code: ${code}`);
+            process.exit(code);
+        }
+    })
+    ngrok.stdout.pipe(process.stdout);
+    ngrok.stderr.pipe(process.stdout);
+}
 
 cam.restartStream().then(function () {
     console.log('[livestream]', 'started');
 
+    start_ngrok();
+
     var STREAM_PORT =           8082;
     var WEBSOCKET_PORT =        8084;
     var STREAM_MAGIC_BYTES =    'jsmp';
-    var width =                 320;
+    var width =                 432;
     var height =                240;
 
     var socketServer = new (require('ws').Server)({port: WEBSOCKET_PORT});
 
     socketServer.on('connection', function(socket) {
-        var streamHeader = new Buffer(8);
+        var streamHeader = Buffer.alloc(8);
         streamHeader.write(STREAM_MAGIC_BYTES);
         streamHeader.writeUInt16BE(width, 4);
         streamHeader.writeUInt16BE(height, 6);
@@ -58,7 +82,7 @@ cam.restartStream().then(function () {
     app.listen(STREAM_PORT);
 
     var spawn_process = function () {
-        var ffmpeg = require('child_process').spawn("ffmpeg", [
+        var ffmpeg = childProcess.spawn("ffmpeg", [
 		"-f",
 		"mpegts",
 		"-i",
@@ -75,7 +99,7 @@ cam.restartStream().then(function () {
         ffmpeg.stdout.pipe(process.stdout);
         ffmpeg.stderr.pipe(process.stdout);
         ffmpeg.on('exit', function () {
-            spawn_process(); 
+            spawn_process();
         });
     };
     spawn_process();

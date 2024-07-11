@@ -1,0 +1,12 @@
+version: "2"
+region: eu
+tunnels:
+    livestream:
+        proto: http
+        addr: 8082
+        subdomain: martins
+    websocket:
+        proto: http
+        addr: 8084
+        subdomain: martinsws
+
