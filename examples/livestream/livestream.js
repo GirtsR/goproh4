@@ -7,7 +7,8 @@ const childProcess = require('child_process');
 
 const start_ngrok = function () {
     if (typeof process.env.NGROK_AUTHTOKEN === "undefined") {
-        throw new Error("NGROK_AUTHTOKEN env var is not defined");
+        console.error("NGROK_AUTHTOKEN env var is not defined");
+        process.exit(-1);
     }
     console.log("Launching ngrok tunnels..");
     const ngrok = childProcess.spawn("ngrok", [
