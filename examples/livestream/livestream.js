@@ -30,7 +30,7 @@ const start_ngrok = function () {
 cam.restartStream().then(function () {
     console.log('[livestream]', 'started');
 
-    start_ngrok();
+    // start_ngrok();
 
     var STREAM_PORT =           8082;
     var WEBSOCKET_PORT =        8084;
